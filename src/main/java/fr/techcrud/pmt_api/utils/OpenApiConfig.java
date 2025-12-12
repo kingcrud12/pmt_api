@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Test project API")
+                        .title("PMT API")
                         .version("v1")
                         .description("Documentation API")
                         .contact(new Contact().name("Yann DIPITA").email("dipitay@gmail.com")));
