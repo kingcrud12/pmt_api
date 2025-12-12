@@ -25,9 +25,11 @@ import java.io.IOException;
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtUtil jwtUtil) {
+    public SecurityConfig(JwtUtil jwtUtil, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.jwtUtil = jwtUtil;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
@@ -40,25 +42,25 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint));
 
         return http.build();
     }
-
 
     @Bean
     public OncePerRequestFilter jwtFilter() {
         return new OncePerRequestFilter() {
             @Override
-            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                    FilterChain filterChain)
                     throws ServletException, IOException {
 
                 String authHeader = request.getHeader("Authorization");
@@ -66,8 +68,8 @@ public class SecurityConfig {
                     String token = authHeader.substring(7);
                     if (jwtUtil.isTokenValid(token)) {
                         String email = jwtUtil.getEmailFromToken(token);
-                        UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(email, null, null);
+                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(email, null,
+                                null);
                         SecurityContextHolder.getContext().setAuthentication(auth);
                     }
                 }
