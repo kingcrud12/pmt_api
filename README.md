@@ -1,6 +1,26 @@
 # Project Guidelines - PMT API
 
+
 Bienvenue sur le projet PMT API. Ce document sert de référence pour les standards de développement, l'architecture du code et le workflow Git à respecter par l'équipe.
+
+## 🚀 Démarrage Rapide
+
+### Pré-requis
+*   Java 17+ (ou version du projet)
+*   Maven
+
+### Lancer le serveur
+```bash
+mvn spring-boot:run
+```
+Le serveur démarrera par défaut sur le port `8080`.
+
+## 📚 Documentation API
+
+Une fois le serveur lancé, vous pouvez accéder à la documentation de l'API :
+
+*   **Swagger UI (Interface visuelle)** : [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+*   **OpenAPI JSON** : [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
 
 ## 🏗 Architecture & Structure du Code
 
