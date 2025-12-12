@@ -64,3 +64,79 @@ Format : `[CIBLE] Type: Description`
 *   `[DEV] Feat: Implémentation du système de notification`
 *   `[STAGING] Fix: Correction du bug d'affichage prix`
 *   `[PROD] Release: Version 1.2.0`
+
+## 🚀 Guide d'Implémentation d'une Fonctionnalité
+
+Voici le processus étape par étape pour implémenter une nouvelle fonctionnalité dans le projet, en respectant les standards de qualité.
+
+### 1. Analyse & Modélisation
+Avant de coder, vérifiez si la fonctionnalité se rattache à une entité existante (`models`).
+*   Si **OUI** : Réutilisez l'entité existante.
+*   Si **NON** : Créez une nouvelle classe annotée `@Entity` dans `fr.techcrud.pmt_api.models`.
+
+### 2. Couche Service (Business Logic)
+Toute la logique métier doit résider ici, jamais dans le contrôleur.
+
+1.  **Créer l'interface** : Dans `fr.techcrud.pmt_api.services`.
+    ```java
+    public interface UserService {
+        User create(User user);
+        User findById(UUID id);
+    }
+    ```
+2.  **Créer l'implémentation** : Créez une classe conventionnellement nommée `XServiceImpl` qui implémente l'interface et est annotée `@Service`.
+    ```java
+    @Service
+    public class UserServiceImpl implements UserService {
+        // ... implémentation
+    }
+    ```
+
+### 3. Gestion des Exceptions (Règle d'Or)
+**NE JAMAIS RETOURNER `null`.**
+
+Utilisez les exceptions personnalisées pour gérer les cas d'erreur. Cela permet au ControllerAdvice de renvoyer les bons codes HTTP.
+
+*   **Ressource non trouvée** : `throw new RessourceNotFoundException("User not found with id " + id);` (Code 404)
+*   **Mauvaise requête** : `throw new BadRequestException("Invalid email format");` (Code 400)
+*   **Opération illégale** : `throw new IllegalArgumentException("...");`
+
+Exemple :
+```java
+@Override
+public User findById(UUID id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new RessourceNotFoundException("User not found"));
+}
+```
+
+### 4. DTO & Sérialisation
+Si les données exposées diffèrent de l'entité (ou pour éviter les boucles infinies JSON), utilisez un DTO.
+
+1.  **Créer le DTO** : Dans `fr.techcrud.pmt_api.dto`.
+2.  **Mapper/Serializer** : Utilisez un mapper (ex: MapStruct ou manuel) pour convertir Entité <-> DTO.
+
+### 5. Controller (API REST)
+Le contrôleur doit être **léger**. Il ne fait que recevoir la requête, appeler le service, et retourner la réponse.
+
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.findById(id));
+    }
+}
+```
+*Note : Grâce aux exceptions du Service, pas besoin de `try-catch` ou de vérification `if (user == null)` ici.*
+
+### 6. Tests Unitaires
+Chaque service doit être testé unitairement. Mockez les repositories pour isoler la logique métier.
