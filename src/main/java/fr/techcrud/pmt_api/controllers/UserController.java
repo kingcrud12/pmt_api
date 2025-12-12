@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -36,6 +37,17 @@ public class UserController {
         String email = (String) authentication.getPrincipal();
 
         User user = userService.findByEmail(email);
+        if (user == null) {
+            throw new RessourceNotFoundException("User not found");
+        }
+
+        return userResponseSerializer.toResponse(user);
+    }
+
+    @GetMapping("/{id}")
+    public UserResponseDto findById(@PathVariable UUID id) {
+        User user = userService.findById(id);
+
         if (user == null) {
             throw new RessourceNotFoundException("User not found");
         }
