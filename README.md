@@ -93,20 +93,16 @@ Toute la logique métier doit résider ici, jamais dans le contrôleur.
     ```
 
 ### 3. Gestion des Exceptions (Règle d'Or)
-**NE JAMAIS RETOURNER `null`.**
+**Le Service retourne `null`, le Controller lève l'exception.**
 
-Utilisez les exceptions personnalisées pour gérer les cas d'erreur. Cela permet au ControllerAdvice de renvoyer les bons codes HTTP.
+Le Service ne doit pas lever d'exception métier (comme `RessourceNotFoundException`). Il doit retourner `null` si l'objet n'est pas trouvé ou si l'opération échoue de manière prévue. C'est la responsabilité du Contrôleur d'interpréter ce `null`.
 
-*   **Ressource non trouvée** : `throw new RessourceNotFoundException("User not found with id " + id);` (Code 404)
-*   **Mauvaise requête** : `throw new BadRequestException("Invalid email format");` (Code 400)
-*   **Opération illégale** : `throw new IllegalArgumentException("...");`
-
-Exemple :
+Exemple Service :
 ```java
 @Override
 public User findById(UUID id) {
-    return userRepository.findById(id)
-        .orElseThrow(() -> new RessourceNotFoundException("User not found"));
+    // Retourne l'utilisateur ou null s'il n'existe pas
+    return userRepository.findById(id).orElse(null);
 }
 ```
 
@@ -117,7 +113,10 @@ Si les données exposées diffèrent de l'entité (ou pour éviter les boucles i
 2.  **Mapper/Serializer** : Utilisez un mapper (ex: MapStruct ou manuel) pour convertir Entité <-> DTO.
 
 ### 5. Controller (API REST)
-Le contrôleur doit être **léger**. Il ne fait que recevoir la requête, appeler le service, et retourner la réponse.
+Le contrôleur reçoit la requête, appelle le service, **vérifie le retour**, et lève l'exception appropriée si nécessaire.
+
+*   **Si retour Service == null** : `throw new RessourceNotFoundException(...)` ou `BadRequestException`.
+*   **Si retour Service != null** : Retourner `ResponseEntity.ok(result)`.
 
 ```java
 @RestController
@@ -132,11 +131,16 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.findById(id));
+        User user = userService.findById(id);
+        
+        if (user == null) {
+            throw new RessourceNotFoundException("User not found with id " + id);
+        }
+        
+        return ResponseEntity.ok(user);
     }
 }
 ```
-*Note : Grâce aux exceptions du Service, pas besoin de `try-catch` ou de vérification `if (user == null)` ici.*
 
 ### 6. Tests Unitaires
 Chaque service doit être testé unitairement. Mockez les repositories pour isoler la logique métier.
