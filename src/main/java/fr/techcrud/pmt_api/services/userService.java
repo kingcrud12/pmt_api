@@ -14,7 +14,7 @@ public interface userService {
     public User create(User user);
     public User update(UUID id, User user);
 
-    User findByEmail(String email);
+    public User findByEmail(String email);
 
-    User updateByEmail(String email, User user);
+    public User updateByEmail(String email, User user);
 }
