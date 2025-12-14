@@ -13,66 +13,65 @@ set -e  # Exit on error
 # Couleurs pour l'affichage
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Fonction pour afficher les messages
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    printf "%b[INFO]%b %s\n" "$BLUE" "$NC" "$1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    printf "%b[SUCCESS]%b %s\n" "$GREEN" "$NC" "$1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    printf "%b[WARNING]%b %s\n" "$YELLOW" "$NC" "$1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    printf "%b[ERROR]%b %s\n" "$RED" "$NC" "$1"
 }
 
 log_step() {
-    echo -e "\n${CYAN}==>${NC} ${BOLD}$1${NC}"
+    printf "\n%b==>%b %b%s%b\n" "$CYAN" "$NC" "$BOLD" "$1" "$NC"
 }
 
 # Fonction pour afficher l'aide
 show_help() {
-    cat << EOF
-${GREEN}PMT API - Script de lancement${NC}
+    printf "%bPMT API - Script de lancement%b\n\n" "$GREEN" "$NC"
 
-${YELLOW}Usage:${NC}
-    ./run.sh [PROFILE] [ACTION]
+    printf "%bUsage:%b\n" "$YELLOW" "$NC"
+    printf "    ./run.sh [PROFILE] [ACTION]\n\n"
 
-${YELLOW}Profils disponibles:${NC}
-    dev      - Environnement de développement (par défaut)
-    staging  - Environnement de staging/recette
-    prod     - Environnement de production
-    ddl      - Génération de schéma uniquement
+    printf "%bProfils disponibles:%b\n" "$YELLOW" "$NC"
+    printf "    dev      - Environnement de développement (par défaut)\n"
+    printf "    staging  - Environnement de staging/recette\n"
+    printf "    prod     - Environnement de production\n"
+    printf "    ddl      - Génération de schéma uniquement\n\n"
 
-${YELLOW}Actions disponibles:${NC}
-    ${CYAN}Migrations Flyway:${NC}
-    info     - Afficher l'état des migrations
-    migrate  - Exécuter les migrations en attente
-    validate - Valider les migrations appliquées
-    repair   - Réparer la table de métadonnées Flyway
-    clean    - Nettoyer toute la base de données (DEV UNIQUEMENT!)
+    printf "%bActions disponibles:%b\n" "$YELLOW" "$NC"
+    printf "    %bMigrations Flyway:%b\n" "$CYAN" "$NC"
+    printf "    info     - Afficher l'état des migrations\n"
+    printf "    migrate  - Exécuter les migrations en attente\n"
+    printf "    validate - Valider les migrations appliquées\n"
+    printf "    repair   - Réparer la table de métadonnées Flyway\n"
+    printf "    clean    - Nettoyer toute la base de données (DEV UNIQUEMENT!)\n\n"
 
-    ${CYAN}Application:${NC}
-    launch   - Lancer l'application Spring Boot
-    build    - Builder l'application (package Maven)
-    schema   - Générer le schéma SQL (profil ddl uniquement)
+    printf "    %bApplication:%b\n" "$CYAN" "$NC"
+    printf "    launch   - Lancer l'application Spring Boot\n"
+    printf "    build    - Builder l'application (package Maven)\n"
+    printf "    schema   - Générer le schéma SQL (profil ddl uniquement)\n\n"
 
-${YELLOW}Exemples:${NC}
-    ./run.sh dev migrate      # Exécuter les migrations en dev
-    ./run.sh staging info     # Voir l'état des migrations en staging
-    ./run.sh prod launch      # Lancer l'application en production
-    ./run.sh ddl schema       # Générer le schéma DDL
+    printf "%bExemples:%b\n" "$YELLOW" "$NC"
+    printf "    ./run.sh dev migrate      # Exécuter les migrations en dev\n"
+    printf "    ./run.sh staging info     # Voir l'état des migrations en staging\n"
+    printf "    ./run.sh prod launch      # Lancer l'application en production\n"
+    printf "    ./run.sh ddl schema       # Générer le schéma DDL\n\n"
 
-EOF
     exit 0
 }
 
@@ -196,7 +195,7 @@ launch_application() {
     log_info "Démarrage de Spring Boot..."
     log_info "L'application sera disponible sur http://localhost:8080"
     log_info "Swagger UI: http://localhost:8080/swagger-ui.html"
-    echo ""
+    printf "\n"
 
     # Lancer l'application
     mvn spring-boot:run -Dspring-boot.run.profiles=$profile
@@ -276,7 +275,7 @@ production_launch() {
 
     log_warning "ATTENTION: Vous êtes sur le point de déployer en PRODUCTION"
     log_warning "Assurez-vous d'avoir fait un backup de la base de données!"
-    echo ""
+    printf "\n"
     read -p "Continuer? (tapez 'yes' pour confirmer): " confirm
 
     if [[ "$confirm" != "yes" ]]; then
@@ -324,7 +323,7 @@ case $PROFILE in
     *)
         log_error "Profil invalide: $PROFILE"
         log_info "Profils valides: dev, staging, prod, ddl"
-        echo ""
+        printf "\n"
         show_help
         ;;
 esac
@@ -336,19 +335,19 @@ case $ACTION in
     *)
         log_error "Action invalide: $ACTION"
         log_info "Actions valides: info, migrate, validate, repair, clean, launch, build, schema"
-        echo ""
+        printf "\n"
         show_help
         ;;
 esac
 
 # Afficher l'en-tête
-echo -e "${GREEN}╔════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║${NC}     PMT API - Gestionnaire de Déploiement    ${GREEN}║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
-echo ""
+printf "%b╔════════════════════════════════════════════════╗%b\n" "$GREEN" "$NC"
+printf "%b║%b     PMT API - Gestionnaire de Déploiement    %b║%b\n" "$GREEN" "$NC" "$GREEN" "$NC"
+printf "%b╚════════════════════════════════════════════════╝%b\n" "$GREEN" "$NC"
+printf "\n"
 log_info "Profil: $PROFILE"
 log_info "Action: $ACTION"
-echo ""
+printf "\n"
 
 # Vérifier les prérequis
 check_prerequisites
@@ -403,6 +402,6 @@ case $ACTION in
         ;;
 esac
 
-echo ""
+printf "\n"
 log_success "Opération terminée!"
 exit 0
