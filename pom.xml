@@ -137,7 +137,69 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.8.2</version>
+				<configuration>
+					<locations>
+						<location>classpath:db/migrations</location>
+					</locations>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-mysql</artifactId>
+						<version>11.8.2</version>
+					</dependency>
+					<dependency>
+						<groupId>com.mysql</groupId>
+						<artifactId>mysql-connector-j</artifactId>
+						<version>9.1.0</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Profile DEV -->
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<flyway.url>${env.PMT_DEV_DB_URL}</flyway.url>
+				<flyway.user>${env.PMT_DEV_DB_USER}</flyway.user>
+				<flyway.password>${env.PMT_DEV_DB_PASSWORD}</flyway.password>
+				<flyway.cleanDisabled>false</flyway.cleanDisabled>
+			</properties>
+		</profile>
+
+		<!-- Profile STAGING -->
+		<profile>
+			<id>staging</id>
+			<properties>
+				<flyway.url>${env.PMT_STAGING_DB_URL}</flyway.url>
+				<flyway.user>${env.PMT_STAGING_DB_USER}</flyway.user>
+				<flyway.password>${env.PMT_STAGING_PASSWORD}</flyway.password>
+				<flyway.cleanDisabled>true</flyway.cleanDisabled>
+			</properties>
+		</profile>
+
+		<!-- Profile PROD -->
+		<profile>
+			<id>prod</id>
+			<properties>
+				<flyway.url>${env.PMT_PROD_DB_URL}</flyway.url>
+				<flyway.user>${env.PMT_PROD_DB_USER}</flyway.user>
+				<flyway.password>${env.PMT_PROD_PASSWORD}</flyway.password>
+				<flyway.cleanDisabled>true</flyway.cleanDisabled>
+				<flyway.validateOnMigrate>true</flyway.validateOnMigrate>
+			</properties>
+		</profile>
+	</profiles>
 
 </project>
