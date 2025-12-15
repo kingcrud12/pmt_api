@@ -139,14 +139,14 @@ check_env_vars() {
             fi
             ;;
         staging)
-            if [[ -z "$PMT_STAGING_DB_URL" ]] || [[ -z "$PMT_STAGING_DB_USER" ]] || [[ -z "$PMT_STAGING_PASSWORD" ]]; then
+            if [[ -z "$PMT_STAGING_DB_URL" ]] || [[ -z "$PMT_STAGING_DB_USER" ]] || [[ -z "$PMT_STAGING_DB_PASSWORD" ]]; then
                 log_error "Variables d'environnement manquantes pour le profil staging"
                 log_info "Vérifiez le contenu de env.sh et assurez-vous que les variables PMT_STAGING_* sont définies"
                 exit 1
             fi
             ;;
         prod)
-            if [[ -z "$PMT_PROD_DB_URL" ]] || [[ -z "$PMT_PROD_DB_USER" ]] || [[ -z "$PMT_PROD_PASSWORD" ]]; then
+            if [[ -z "$PMT_PROD_DB_URL" ]] || [[ -z "$PMT_PROD_DB_USER" ]] || [[ -z "$PMT_PROD_DB_PASSWORD" ]]; then
                 log_error "Variables d'environnement manquantes pour le profil prod"
                 log_info "Vérifiez le contenu de env.sh et assurez-vous que les variables PMT_PROD_* sont définies"
                 exit 1

@@ -184,7 +184,7 @@
 			<properties>
 				<flyway.url>${env.PMT_STAGING_DB_URL}</flyway.url>
 				<flyway.user>${env.PMT_STAGING_DB_USER}</flyway.user>
-				<flyway.password>${env.PMT_STAGING_PASSWORD}</flyway.password>
+				<flyway.password>${env.PMT_STAGING_DB_PASSWORD}</flyway.password>
 				<flyway.cleanDisabled>true</flyway.cleanDisabled>
 			</properties>
 		</profile>
@@ -195,7 +195,7 @@
 			<properties>
 				<flyway.url>${env.PMT_PROD_DB_URL}</flyway.url>
 				<flyway.user>${env.PMT_PROD_DB_USER}</flyway.user>
-				<flyway.password>${env.PMT_PROD_PASSWORD}</flyway.password>
+				<flyway.password>${env.PMT_PROD_DB_PASSWORD}</flyway.password>
 				<flyway.cleanDisabled>true</flyway.cleanDisabled>
 				<flyway.validateOnMigrate>true</flyway.validateOnMigrate>
 			</properties>

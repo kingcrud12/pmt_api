@@ -6,21 +6,57 @@ Bienvenue sur le projet PMT API. Ce document sert de référence pour les standa
 ## 🚀 Démarrage Rapide
 
 ### Pré-requis
-*   Java 17+ (ou version du projet)
-*   Maven
-*   MySQL 8.0+
+*   Java 25+
+*   Maven 3.8+
+*   WireGuard configuré et connecté au serveur MySQL distant
+*   MySQL 8.0+ (serveur distant accessible via WireGuard)
+
+### Architecture Base de Données
+
+Le projet utilise un **serveur MySQL distant** accessible via **WireGuard VPN** :
+- **Adresse serveur** : `10.10.0.1:3306` (via WireGuard)
+- **SSL/TLS** : Requis (`sslMode=REQUIRED`)
+- **Authentification** : `caching_sha2_password`
+- **3 environnements** : dev, staging, production
 
 ### Configuration initiale
+
+#### 1. Configurer WireGuard
+Assurez-vous que WireGuard est actif et que le serveur MySQL est accessible :
 ```bash
-# 1. Copier le fichier de configuration
-cp env.sh.example env.sh
+# Vérifier la connexion WireGuard
+ping 10.10.0.1
 
-# 2. Éditer env.sh et configurer vos mots de passe
-nano env.sh
-
-# 3. Créer la base de données MySQL
-mysql -u root -p -e "CREATE DATABASE project_management_tool_bdd_dev;"
+# Tester la connectivité MySQL
+nc -zv 10.10.0.1 3306
 ```
+
+#### 2. Configurer les variables d'environnement
+```bash
+# Charger les variables d'environnement
+source env.sh
+```
+
+Le fichier `env.sh` contient :
+- Les URLs JDBC avec IP WireGuard et SSL activé
+- Les utilisateurs MySQL par environnement
+- Les mots de passe (DevPass2024@, StagingPass2024@, ProdPass2024@, AdminPass2024@)
+
+#### 3. Initialiser les bases de données
+Le script `init_db.sh` crée automatiquement les bases de données et les utilisateurs sur le serveur distant :
+```bash
+chmod +x init_db.sh
+./init_db.sh
+```
+
+Ce script effectue :
+- ✅ Test de connexion VPN et MySQL
+- ✅ Création des bases : `project_management_tool_bdd_dev`, `project_management_tool_bdd_staging`, `project_management_tool_bdd_prod`
+- ✅ Création des utilisateurs : `pmt_dev`, `pmt_staging`, `pmt_prod`, `pmt_admin`
+- ✅ Configuration des privilèges appropriés
+- ✅ Tests de connexion avec SSL
+
+**Note** : Ce script est idempotent et peut être relancé sans danger.
 
 ### Lancer le serveur
 
@@ -46,21 +82,23 @@ Le projet PMT API peut être lancé dans différents environnements grâce aux p
 
 ### Configuration des variables d'environnement
 
-1. **Copier le template de configuration** :
-   ```bash
-   cp env.sh.example env.sh
-   ```
+Le fichier `env.sh` configure automatiquement toutes les variables nécessaires :
 
-2. **Éditer `env.sh`** avec vos vraies valeurs :
-   ```bash
-   nano env.sh  # ou votre éditeur préféré
-   ```
-   Remplacez les valeurs `CHANGE_ME_*` par vos mots de passe réels pour staging et production.
+```bash
+# Charger les variables d'environnement
+source env.sh
+```
 
-3. **Charger les variables d'environnement** :
-   ```bash
-   source env.sh
-   ```
+**Variables configurées** :
+- `PMT_DEV_DB_URL` : jdbc:mysql://10.10.0.1:3306/project_management_tool_bdd_dev?sslMode=REQUIRED&serverTimezone=UTC
+- `PMT_DEV_DB_USER` : pmt_dev
+- `PMT_DEV_DB_PASSWORD` : DevPass2024@
+- *(Idem pour STAGING et PROD)*
+
+**Important** :
+- ⚠️ Les mots de passe sont définis dans `env.sh` (non versionné pour la sécurité)
+- ✅ SSL est obligatoire pour toutes les connexions
+- ✅ Toutes les URLs utilisent l'IP WireGuard (10.10.0.1)
 
 ### 🎯 Script automatisé `run.sh` (Recommandé)
 
@@ -177,12 +215,14 @@ Le fichier sera généré dans `target/generated-schema/schema.sql`.
 
 ### Profils disponibles
 
-| Profil | Base de données | Flyway | JPA DDL | Usage |
-|:-------|:----------------|:-------|:--------|:------|
-| `dev` | `project_management_tool_bdd_dev` | ✅ Activé | `validate` | Développement local |
-| `staging` | `project_management_tool_bdd_staging` | ✅ Activé | `validate` | Tests d'intégration |
-| `prod` | `project_management_tool_bdd` | ✅ Activé | `validate` | Production |
-| `ddl` | Aucune connexion | ❌ Désactivé | `none` | Génération de schéma |
+| Profil | Base de données | Serveur | Flyway | JPA DDL | Usage |
+|:-------|:----------------|:--------|:-------|:--------|:------|
+| `dev` | `project_management_tool_bdd_dev` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Développement |
+| `staging` | `project_management_tool_bdd_staging` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Tests d'intégration |
+| `prod` | `project_management_tool_bdd_prod` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Production |
+| `ddl` | Aucune connexion | - | ❌ Désactivé | `none` | Génération de schéma |
+
+**Note** : Toutes les connexions nécessitent WireGuard actif et SSL activé.
 
 ## 🗃️ Migrations de Base de Données
 
@@ -343,7 +383,9 @@ java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=staging
 **Avec le script run.sh (recommandé)** :
 ```bash
 # 1. BACKUP de la base de données (OBLIGATOIRE)
-mysqldump -u pmt_prod -p project_management_tool_bdd > backup_$(date +%Y%m%d_%H%M%S).sql
+source env.sh
+mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_prod -p"${PMT_PROD_DB_PASSWORD}" \
+  --ssl-mode=REQUIRED project_management_tool_bdd_prod > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. Exécuter la procédure complète sécurisée
 ./run.sh prod migrate     # Demande confirmation, build, valide et migre
@@ -358,7 +400,8 @@ java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 source env.sh
 
 # 2. BACKUP de la base de données (OBLIGATOIRE)
-mysqldump -u pmt_prod -p project_management_tool_bdd > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_prod -p"${PMT_PROD_DB_PASSWORD}" \
+  --ssl-mode=REQUIRED project_management_tool_bdd_prod > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 3. Vérifier les migrations en attente
 mvn flyway:info -Pprod
