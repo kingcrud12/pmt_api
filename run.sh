@@ -304,6 +304,8 @@ migration_procedure() {
 
 # Procédure complète de lancement en production
 production_launch() {
+    local profile=$1
+
     log_step "Procédure de lancement en PRODUCTION"
 
     log_warning "ATTENTION: Vous êtes sur le point de déployer en PRODUCTION"
@@ -322,15 +324,15 @@ production_launch() {
 
     # Étape 2: Info migrations
     log_info "Étape 2/4: Vérification des migrations en attente"
-    run_flyway_command "prod" "info"
+    run_flyway_command "$profile" "info"
 
-    # Étape 3: Valider
-    log_info "Étape 3/4: Validation des migrations"
-    run_flyway_command "prod" "validate"
+    # Étape 3: Migrer
+    log_info "Étape 3/4: Exécution des migrations"
+    run_flyway_command "$profile" "migrate"
 
-    # Étape 4: Migrer
-    log_info "Étape 4/4: Exécution des migrations"
-    run_flyway_command "prod" "migrate"
+    # Étape 4: Valider
+    log_info "Étape 4/4: Validation des migrations"
+    run_flyway_command "$profile" "validate"
 
     log_success "Application prête à être lancée!"
     log_info "Pour lancer: java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod"
@@ -394,8 +396,21 @@ case $ACTION in
         run_flyway_command $PROFILE "info"
         ;;
     migrate)
-        if [[ "$PROFILE" == "prod" ]]; then
-            production_launch
+        # Restriction de sécurité: seuls les profils admin peuvent migrer staging et prod
+        if [[ "$PROFILE" == "staging" ]] || [[ "$PROFILE" == "prod" ]]; then
+            log_error "Migration interdite avec le profil $PROFILE pour des raisons de permissions"
+            log_info "Les bases staging et prod nécessitent des privilèges admin"
+            log_info "Utilisez les profils admin à la place:"
+            if [[ "$PROFILE" == "staging" ]]; then
+                log_info "  ./run.sh admin-staging migrate"
+            else
+                log_info "  ./run.sh admin-prod migrate"
+            fi
+            exit 1
+        fi
+
+        if [[ "$PROFILE" == "admin-prod" ]]; then
+            production_launch "$PROFILE"
         else
             migration_procedure $PROFILE
         fi

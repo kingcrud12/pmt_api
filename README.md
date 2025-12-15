@@ -156,10 +156,12 @@ Le projet inclut un script `run.sh` qui automatise toutes les opérations couran
 
 **Gérer les migrations** :
 ```bash
-./run.sh dev info         # Voir l'état des migrations
-./run.sh dev migrate      # Exécuter les migrations (procédure complète)
-./run.sh staging validate # Valider les migrations
-./run.sh dev clean        # Nettoyer la DB (avec confirmation)
+./run.sh dev info              # Voir l'état des migrations
+./run.sh dev migrate           # Exécuter les migrations en dev
+./run.sh admin-staging migrate # Exécuter les migrations en staging (admin requis)
+./run.sh admin-prod migrate    # Exécuter les migrations en prod (admin requis)
+./run.sh staging validate      # Valider les migrations
+./run.sh dev clean             # Nettoyer la DB (avec confirmation)
 ```
 
 **Builder et générer** :
@@ -177,23 +179,30 @@ Le projet inclut un script `run.sh` qui automatise toutes les opérations couran
 
 Le script exécute des **procédures complètes** pour certaines actions :
 
-**Migration en développement/staging** (`./run.sh dev migrate`) :
+**Migration en développement** (`./run.sh dev migrate`) :
 1. Vérifier l'état des migrations (`flyway:info`)
-2. Valider les migrations (`flyway:validate`)
-3. Exécuter les migrations (`flyway:migrate`)
+2. Exécuter les migrations (`flyway:migrate`)
+3. Valider les migrations (`flyway:validate`)
 4. Vérification finale (`flyway:info`)
 
-**Migration en production** (`./run.sh prod migrate`) :
+**Migration en staging** (`./run.sh admin-staging migrate`) :
+1. Vérifier l'état des migrations (`flyway:info`)
+2. Exécuter les migrations (`flyway:migrate`)
+3. Valider les migrations (`flyway:validate`)
+4. Vérification finale (`flyway:info`)
+
+**Migration en production** (`./run.sh admin-prod migrate`) :
 1. Demande de confirmation (avec backup obligatoire)
 2. Build de l'application
-3. Vérification des migrations en attente
-4. Validation des migrations
-5. Exécution des migrations
+3. Vérification des migrations en attente (`flyway:info`)
+4. Exécution des migrations (`flyway:migrate`)
+5. Validation des migrations (`flyway:validate`)
 6. Instructions pour lancer l'application
 
 #### Sécurités intégrées
 
-- ⚠️ **Clean désactivé** en staging/prod (disponible uniquement en dev)
+- ⚠️ **Migrations staging/prod** : Réservées aux profils admin uniquement (`admin-staging`, `admin-prod`)
+- ⚠️ **Clean désactivé** en staging/prod (disponible uniquement en dev et profils admin)
 - ⚠️ **Confirmation requise** pour les actions destructives (clean, migration prod)
 - ⚠️ **Validation stricte** des profils et actions
 - ⚠️ **Arrêt immédiat** au premier échec
@@ -258,6 +267,7 @@ Les profils `admin-*` sont spécialement conçus pour l'administration des bases
 
 #### Caractéristiques
 - 👤 **Utilisateur** : `pmt_admin` (privilèges complets sur toutes les bases)
+- 🔒 **Migrations staging/prod** : **OBLIGATOIRE** pour toutes les migrations sur staging et production
 - 🗑️ **Clean autorisé** : Contrairement aux profils staging/prod classiques, les profils admin peuvent exécuter `flyway:clean`
 - 🚫 **Pas d'application** : Ces profils sont uniquement pour Flyway (pas de `application.properties` associés)
 - 🔐 **Sécurité** : Confirmation requise pour les opérations destructives
@@ -300,9 +310,11 @@ Nommage obligatoire : `V{version}__{description}.sql`
 
 **💡 Recommandation** : Utilisez le script `run.sh` pour une gestion simplifiée des migrations :
 ```bash
-./run.sh dev info      # Voir l'état
-./run.sh dev migrate   # Exécuter les migrations (procédure complète)
-./run.sh dev validate  # Valider
+./run.sh dev info              # Voir l'état en dev
+./run.sh dev migrate           # Exécuter les migrations en dev
+./run.sh admin-staging migrate # Exécuter les migrations en staging (admin requis)
+./run.sh admin-prod migrate    # Exécuter les migrations en prod (admin requis)
+./run.sh dev validate          # Valider
 ```
 
 #### Méthode manuelle avec Maven
@@ -312,35 +324,37 @@ Si vous préférez utiliser Maven directement, le plugin Flyway Maven permet de 
 **Vérifier l'état des migrations** :
 ```bash
 source env.sh
-mvn flyway:info           # Environnement dev (par défaut)
-mvn flyway:info -Pstaging # Environnement staging
-mvn flyway:info -Pprod    # Environnement production
+mvn flyway:info                 # Environnement dev (par défaut)
+mvn flyway:info -Padmin-staging # Environnement staging (admin requis)
+mvn flyway:info -Padmin-prod    # Environnement production (admin requis)
 ```
 
 #### Exécuter les migrations
 ```bash
 source env.sh
-mvn flyway:migrate           # Dev
-mvn flyway:migrate -Pstaging # Staging
-mvn flyway:migrate -Pprod    # Production
+mvn flyway:migrate                 # Dev
+mvn flyway:migrate -Padmin-staging # Staging (admin requis)
+mvn flyway:migrate -Padmin-prod    # Production (admin requis)
 ```
+
+⚠️ **Important** : Les migrations sur staging et production nécessitent les profils admin (`admin-staging`, `admin-prod`) pour des raisons de permissions.
 
 #### Valider les migrations
 Vérifie que les migrations appliquées correspondent aux fichiers présents :
 ```bash
 source env.sh
-mvn flyway:validate           # Dev
-mvn flyway:validate -Pstaging # Staging
-mvn flyway:validate -Pprod    # Production
+mvn flyway:validate                 # Dev
+mvn flyway:validate -Padmin-staging # Staging (admin requis)
+mvn flyway:validate -Padmin-prod    # Production (admin requis)
 ```
 
 #### Réparer la table de métadonnées
 En cas de problème avec la table `flyway_schema_history` :
 ```bash
 source env.sh
-mvn flyway:repair           # Dev
-mvn flyway:repair -Pstaging # Staging
-mvn flyway:repair -Pprod    # Production
+mvn flyway:repair                 # Dev
+mvn flyway:repair -Padmin-staging # Staging (admin requis)
+mvn flyway:repair -Padmin-prod    # Production (admin requis)
 ```
 
 #### Nettoyer la base de données (⚠️ DANGEREUX)
@@ -417,9 +431,11 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 **Avec le script run.sh (recommandé)** :
 ```bash
-./run.sh staging migrate  # Procédure complète automatique
-./run.sh staging launch   # Puis lancer l'application
+./run.sh admin-staging migrate  # Procédure complète avec profil admin
+./run.sh staging launch         # Puis lancer l'application
 ```
+
+⚠️ **Important** : Les migrations sur staging nécessitent le profil `admin-staging` pour des raisons de permissions.
 
 **Ou manuellement** :
 ```bash
@@ -427,10 +443,10 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 source env.sh
 
 # 2. Vérifier les migrations en attente
-mvn flyway:info -Pstaging
+mvn flyway:info -Padmin-staging
 
 # 3. Exécuter les migrations
-mvn flyway:migrate -Pstaging
+mvn flyway:migrate -Padmin-staging
 
 # 4. Démarrer l'application
 java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=staging
@@ -442,15 +458,17 @@ java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=staging
 ```bash
 # 1. BACKUP de la base de données (OBLIGATOIRE)
 source env.sh
-mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_prod -p"${PMT_PROD_DB_PASSWORD}" \
+mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_admin -p"${PMT_ADMIN_DB_PASSWORD}" \
   --ssl-mode=REQUIRED project_management_tool_bdd_prod > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 2. Exécuter la procédure complète sécurisée
-./run.sh prod migrate     # Demande confirmation, build, valide et migre
+./run.sh admin-prod migrate  # Demande confirmation, build, valide et migre
 
 # 3. Lancer l'application
 java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 ```
+
+⚠️ **Important** : Les migrations sur production nécessitent le profil `admin-prod` pour des raisons de permissions.
 
 **Ou manuellement** :
 ```bash
@@ -458,20 +476,20 @@ java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 source env.sh
 
 # 2. BACKUP de la base de données (OBLIGATOIRE)
-mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_prod -p"${PMT_PROD_DB_PASSWORD}" \
+mysqldump --protocol=TCP -h 10.10.0.1 -P 3306 -u pmt_admin -p"${PMT_ADMIN_DB_PASSWORD}" \
   --ssl-mode=REQUIRED project_management_tool_bdd_prod > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 3. Vérifier les migrations en attente
-mvn flyway:info -Pprod
+mvn flyway:info -Padmin-prod
 
-# 4. Valider les migrations
-mvn flyway:validate -Pprod
+# 4. Exécuter les migrations
+mvn flyway:migrate -Padmin-prod
 
-# 5. Exécuter les migrations
-mvn flyway:migrate -Pprod
+# 5. Valider les migrations
+mvn flyway:validate -Padmin-prod
 
 # 6. Vérifier que tout s'est bien passé
-mvn flyway:info -Pprod
+mvn flyway:info -Padmin-prod
 
 # 7. Démarrer l'application
 java -jar target/PMT_API-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
