@@ -48,10 +48,13 @@ show_help() {
     printf "    ./run.sh [PROFILE] [ACTION]\n\n"
 
     printf "%bProfils disponibles:%b\n" "$YELLOW" "$NC"
-    printf "    dev      - Environnement de développement (par défaut)\n"
-    printf "    staging  - Environnement de staging/recette\n"
-    printf "    prod     - Environnement de production\n"
-    printf "    ddl      - Génération de schéma uniquement\n\n"
+    printf "    dev         - Environnement de développement (par défaut)\n"
+    printf "    staging     - Environnement de staging/recette\n"
+    printf "    prod        - Environnement de production\n"
+    printf "    admin-dev   - Admin: gestion base DEV (clean autorisé)\n"
+    printf "    admin-staging - Admin: gestion base STAGING (clean autorisé)\n"
+    printf "    admin-prod  - Admin: gestion base PROD (clean autorisé)\n"
+    printf "    ddl         - Génération de schéma uniquement\n\n"
 
     printf "%bActions disponibles:%b\n" "$YELLOW" "$NC"
     printf "    %bMigrations Flyway:%b\n" "$CYAN" "$NC"
@@ -67,10 +70,11 @@ show_help() {
     printf "    schema   - Générer le schéma SQL (profil ddl uniquement)\n\n"
 
     printf "%bExemples:%b\n" "$YELLOW" "$NC"
-    printf "    ./run.sh dev migrate      # Exécuter les migrations en dev\n"
-    printf "    ./run.sh staging info     # Voir l'état des migrations en staging\n"
-    printf "    ./run.sh prod launch      # Lancer l'application en production\n"
-    printf "    ./run.sh ddl schema       # Générer le schéma DDL\n\n"
+    printf "    ./run.sh dev migrate         # Exécuter les migrations en dev\n"
+    printf "    ./run.sh staging info        # Voir l'état des migrations en staging\n"
+    printf "    ./run.sh prod launch         # Lancer l'application en production\n"
+    printf "    ./run.sh admin-staging clean # Nettoyer la base staging (admin)\n"
+    printf "    ./run.sh ddl schema          # Générer le schéma DDL\n\n"
 
     exit 0
 }
@@ -152,6 +156,27 @@ check_env_vars() {
                 exit 1
             fi
             ;;
+        admin-dev)
+            if [[ -z "$PMT_ADMIN_DEV_DB_URL" ]] || [[ -z "$PMT_ADMIN_DB_USER" ]] || [[ -z "$PMT_ADMIN_DB_PASSWORD" ]]; then
+                log_error "Variables d'environnement manquantes pour le profil admin-dev"
+                log_info "Vérifiez le contenu de env.sh et assurez-vous que les variables PMT_ADMIN_* sont définies"
+                exit 1
+            fi
+            ;;
+        admin-staging)
+            if [[ -z "$PMT_ADMIN_STAGING_DB_URL" ]] || [[ -z "$PMT_ADMIN_DB_USER" ]] || [[ -z "$PMT_ADMIN_DB_PASSWORD" ]]; then
+                log_error "Variables d'environnement manquantes pour le profil admin-staging"
+                log_info "Vérifiez le contenu de env.sh et assurez-vous que les variables PMT_ADMIN_* sont définies"
+                exit 1
+            fi
+            ;;
+        admin-prod)
+            if [[ -z "$PMT_ADMIN_PROD_DB_URL" ]] || [[ -z "$PMT_ADMIN_DB_USER" ]] || [[ -z "$PMT_ADMIN_DB_PASSWORD" ]]; then
+                log_error "Variables d'environnement manquantes pour le profil admin-prod"
+                log_info "Vérifiez le contenu de env.sh et assurez-vous que les variables PMT_ADMIN_* sont définies"
+                exit 1
+            fi
+            ;;
     esac
 
     log_success "Variables d'environnement OK"
@@ -165,9 +190,11 @@ run_flyway_command() {
     log_step "Exécution de: mvn flyway:$command -P$profile"
 
     # Vérification spéciale pour clean
-    if [[ "$command" == "clean" ]] && [[ "$profile" != "dev" ]]; then
-        log_error "La commande 'clean' n'est disponible qu'en environnement dev pour des raisons de sécurité"
-        exit 1
+    if [[ "$command" == "clean" ]]; then
+        if [[ "$profile" != "dev" ]] && [[ "$profile" != "admin-dev" ]] && [[ "$profile" != "admin-staging" ]] && [[ "$profile" != "admin-prod" ]]; then
+            log_error "La commande 'clean' n'est disponible qu'en profil dev ou admin-* pour des raisons de sécurité"
+            exit 1
+        fi
     fi
 
     # Exécuter la commande
@@ -189,6 +216,12 @@ launch_application() {
     if [[ "$profile" == "ddl" ]]; then
         log_error "Le profil ddl ne peut pas être utilisé pour lancer l'application"
         log_info "Utilisez: ./run.sh ddl schema"
+        exit 1
+    fi
+
+    if [[ "$profile" == "admin-dev" ]] || [[ "$profile" == "admin-staging" ]] || [[ "$profile" == "admin-prod" ]]; then
+        log_error "Les profils admin-* sont uniquement pour la gestion de base de données (Flyway)"
+        log_info "Utilisez les profils dev, staging ou prod pour lancer l'application"
         exit 1
     fi
 
@@ -254,13 +287,13 @@ migration_procedure() {
     log_info "Étape 1/3: Vérification de l'état des migrations"
     run_flyway_command $profile "info"
 
-    # Étape 2: Valider les migrations
-    log_info "Étape 2/3: Validation des migrations"
-    run_flyway_command $profile "validate"
-
-    # Étape 3: Exécuter les migrations
-    log_info "Étape 3/3: Exécution des migrations"
+    # Étape 2: Exécuter les migrations
+    log_info "Étape 2/3: Exécution des migrations"
     run_flyway_command $profile "migrate"
+
+    # Étape 3: Valider que tout est cohérent
+    log_info "Étape 3/3: Validation post-migration"
+    run_flyway_command $profile "validate"
 
     # Vérification finale
     log_info "Vérification finale"
@@ -318,11 +351,11 @@ ACTION=${2:-launch}
 
 # Valider le profil
 case $PROFILE in
-    dev|staging|prod|ddl)
+    dev|staging|prod|admin-dev|admin-staging|admin-prod|ddl)
         ;;
     *)
         log_error "Profil invalide: $PROFILE"
-        log_info "Profils valides: dev, staging, prod, ddl"
+        log_info "Profils valides: dev, staging, prod, admin-dev, admin-staging, admin-prod, ddl"
         printf "\n"
         show_help
         ;;

@@ -1,7 +1,32 @@
 # Project Guidelines - PMT API
 
-
 Bienvenue sur le projet PMT API. Ce document sert de référence pour les standards de développement, l'architecture du code et le workflow Git à respecter par l'équipe.
+
+## 📑 Table des matières
+
+- [🚀 Démarrage Rapide](#-démarrage-rapide)
+  - [Pré-requis](#pré-requis)
+  - [Architecture Base de Données](#architecture-base-de-données)
+  - [Configuration initiale](#configuration-initiale)
+  - [Lancer le serveur](#lancer-le-serveur)
+- [🚀 Lancement](#-lancement)
+  - [Configuration des variables d'environnement](#configuration-des-variables-denvironnement)
+  - [Script automatisé run.sh](#-script-automatisé-runsh-recommandé)
+  - [Profils disponibles](#profils-disponibles)
+  - [Profils Admin](#profils-admin)
+- [🗃️ Migrations de Base de Données](#️-migrations-de-base-de-données)
+  - [Structure des migrations](#structure-des-migrations)
+  - [Commandes Flyway](#commandes-flyway)
+  - [Procédure de création d'une migration](#procédure-de-création-dune-migration)
+  - [Procédure de déploiement](#procédure-de-déploiement-des-migrations)
+  - [Bonnes pratiques](#bonnes-pratiques)
+- [📚 Documentation API](#-documentation-api)
+- [🏗 Architecture & Structure du Code](#-architecture--structure-du-code)
+- [🔄 Git Workflow](#-git-workflow)
+- [📝 Conventions de Nommage](#-conventions-de-nommage)
+- [🚀 Guide d'Implémentation](#-guide-dimplémentation-dune-fonctionnalité)
+
+---
 
 ## 🚀 Démarrage Rapide
 
@@ -215,14 +240,47 @@ Le fichier sera généré dans `target/generated-schema/schema.sql`.
 
 ### Profils disponibles
 
-| Profil | Base de données | Serveur | Flyway | JPA DDL | Usage |
-|:-------|:----------------|:--------|:-------|:--------|:------|
-| `dev` | `project_management_tool_bdd_dev` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Développement |
-| `staging` | `project_management_tool_bdd_staging` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Tests d'intégration |
-| `prod` | `project_management_tool_bdd_prod` | 10.10.0.1:3306 (WG) | ✅ Activé | `validate` | Production |
-| `ddl` | Aucune connexion | - | ❌ Désactivé | `none` | Génération de schéma |
+| Profil | Base de données | Serveur | Utilisateur | Flyway | JPA DDL | Usage |
+|:-------|:----------------|:--------|:-----------|:-------|:--------|:------|
+| `dev` | `project_management_tool_bdd_dev` | 10.10.0.1:3306 (WG) | `pmt_dev` | ✅ Activé | `validate` | Développement |
+| `staging` | `project_management_tool_bdd_staging` | 10.10.0.1:3306 (WG) | `pmt_staging` | ✅ Activé | `validate` | Tests d'intégration |
+| `prod` | `project_management_tool_bdd_prod` | 10.10.0.1:3306 (WG) | `pmt_prod` | ✅ Activé | `validate` | Production |
+| `admin-dev` | `project_management_tool_bdd_dev` | 10.10.0.1:3306 (WG) | `pmt_admin` | ✅ Activé | - | 🔑 Admin DEV (clean autorisé) |
+| `admin-staging` | `project_management_tool_bdd_staging` | 10.10.0.1:3306 (WG) | `pmt_admin` | ✅ Activé | - | 🔑 Admin STAGING (clean autorisé) |
+| `admin-prod` | `project_management_tool_bdd_prod` | 10.10.0.1:3306 (WG) | `pmt_admin` | ✅ Activé | - | 🔑 Admin PROD (clean autorisé) |
+| `ddl` | Aucune connexion | - | - | ❌ Désactivé | `none` | Génération de schéma |
 
 **Note** : Toutes les connexions nécessitent WireGuard actif et SSL activé.
+
+### Profils Admin
+
+Les profils `admin-*` sont spécialement conçus pour l'administration des bases de données avec l'utilisateur `pmt_admin` qui possède tous les droits.
+
+#### Caractéristiques
+- 👤 **Utilisateur** : `pmt_admin` (privilèges complets sur toutes les bases)
+- 🗑️ **Clean autorisé** : Contrairement aux profils staging/prod classiques, les profils admin peuvent exécuter `flyway:clean`
+- 🚫 **Pas d'application** : Ces profils sont uniquement pour Flyway (pas de `application.properties` associés)
+- 🔐 **Sécurité** : Confirmation requise pour les opérations destructives
+
+#### Cas d'usage
+```bash
+# Nettoyer complètement la base de staging
+./run.sh admin-staging clean
+
+# Vérifier l'état des migrations en prod avec droits admin
+./run.sh admin-prod info
+
+# Réparer la table flyway_schema_history en dev
+./run.sh admin-dev repair
+
+# Migrer en tant qu'admin
+./run.sh admin-staging migrate
+```
+
+#### Sécurités
+- ⚠️ La commande `clean` demande une confirmation explicite
+- ⚠️ Les profils admin ne peuvent PAS lancer l'application Spring Boot
+- ⚠️ Utilisez ces profils uniquement pour les opérations de maintenance de base de données
 
 ## 🗃️ Migrations de Base de Données
 
