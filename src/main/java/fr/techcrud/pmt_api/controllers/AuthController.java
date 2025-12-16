@@ -6,6 +6,8 @@ import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.services.AuthService;
 import fr.techcrud.pmt_api.services.userService;
 import fr.techcrud.pmt_api.utils.UserResponseSerializer;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "Endpoints for authentication")
 public class AuthController {
 
     @Autowired
@@ -32,6 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Log in", description = "Authenticate a user and return a JWT token")
     public ResponseEntity<?> login(@RequestBody UserLoginDto loginRequest) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
@@ -46,6 +50,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
+    @Operation(summary = "Create account", description = "Register a new user")
     public UserResponseDto create(@RequestBody User user) {
         User response = userService.create(user);
         if (response == null) {
