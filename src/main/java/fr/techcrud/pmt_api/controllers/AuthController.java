@@ -31,7 +31,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginDto loginRequest) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
@@ -44,7 +44,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     @ResponseStatus(code = HttpStatus.CREATED)
     public UserResponseDto create(@RequestBody User user) {
         User response = userService.create(user);
