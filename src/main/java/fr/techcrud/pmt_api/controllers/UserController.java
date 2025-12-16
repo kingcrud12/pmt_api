@@ -68,16 +68,4 @@ public class UserController {
 
         return userResponseSerializer.toResponse(updatedUser);
     }
-
-
-
-    @PostMapping
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public UserResponseDto create(@RequestBody User user) {
-        User response = userService.create(user);
-        if (response == null) {
-            throw new BadRequestException("User already exists");
-        }
-        return userResponseSerializer.toResponse(user);
-    }
 }
