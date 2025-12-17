@@ -72,15 +72,24 @@ public class userServiceImpl implements userService{
         return userUpdate.userUpdater(id, userData);
     }
 
-    @Override
     public User updateByEmail(String email, User userData) {
         User existingUser = userRepository.findByEmail(email).orElse(null);
         if (existingUser == null) return null;
 
-        existingUser.setFirstName(userData.getFirstName());
-        existingUser.setLastName(userData.getLastName());
-        existingUser.setPassword(userData.getPassword());
-        existingUser.setRole(userData.getRole() != null ? userData.getRole() : "USER");
+        if (userData.getFirstName() != null) {
+            existingUser.setFirstName(userData.getFirstName());
+        }
+        if (userData.getLastName() != null) {
+            existingUser.setLastName(userData.getLastName());
+        }
+
+        if (userData.getPassword() != null && !userData.getPassword().isEmpty()) {
+            existingUser.setPassword(userData.getPassword());
+        }
+
+        if (userData.getRole() != null) {
+            existingUser.setRole(userData.getRole());
+        }
 
         return userRepository.save(existingUser);
     }
