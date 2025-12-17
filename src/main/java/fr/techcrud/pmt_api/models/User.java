@@ -35,6 +35,9 @@ public class User {
     @Column(name = "role", nullable = false)
     private String role;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     public UUID getId() {
         return id;
     }
@@ -82,6 +85,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
 }
