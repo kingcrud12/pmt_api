@@ -1,14 +1,14 @@
 package fr.techcrud.pmt_api.controllers;
 
-
 import fr.techcrud.pmt_api.dto.UserResponseDto;
-import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.exceptions.RessourceNotFoundException;
 import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.services.userService;
 import fr.techcrud.pmt_api.utils.UserResponseSerializer;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +18,8 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@Tag(name = "Users", description = "Endpoints for managing users")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     @Autowired
@@ -26,11 +28,13 @@ public class UserController {
     private UserResponseSerializer userResponseSerializer;
 
     @GetMapping
+    @Operation(summary = "Get list of users", description = "Retrieve all users")
     public List<User> findAll() {
         return userService.findAll();
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Retrieve the currently authenticated user")
     public UserResponseDto getMe() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assert authentication != null;
@@ -45,6 +49,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID", description = "Retrieve a user by their unique ID")
     public UserResponseDto findById(@PathVariable UUID id) {
         User user = userService.findById(id);
 
@@ -56,6 +61,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @Operation(summary = "Update current user", description = "Update the profile of the currently authenticated user")
     public UserResponseDto updateMe(@RequestBody User userData) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assert authentication != null;
@@ -67,17 +73,5 @@ public class UserController {
         }
 
         return userResponseSerializer.toResponse(updatedUser);
-    }
-
-
-
-    @PostMapping
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public UserResponseDto create(@RequestBody User user) {
-        User response = userService.create(user);
-        if (response == null) {
-            throw new BadRequestException("User already exists");
-        }
-        return userResponseSerializer.toResponse(user);
     }
 }

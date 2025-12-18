@@ -3,7 +3,6 @@ package fr.techcrud.pmt_api.security;
 import fr.techcrud.pmt_api.utils.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +19,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -44,10 +45,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                        // Regroupement des chemins permitAll() pour plus de clarté
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/api/v1/auth/**",
+                                "/error")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint));
@@ -58,11 +63,28 @@ public class SecurityConfig {
     @Bean
     public OncePerRequestFilter jwtFilter() {
         return new OncePerRequestFilter() {
+
+            // Liste des chemins qui doivent être ignorés par le JwtFilter
+            private final List<String> exclusionPrefixes = Arrays.asList(
+                    "/api/v1/auth/",
+                    "/v3/api-docs/",
+                    "/swagger-ui/",
+                    "/error");
+
+            // NOUVEAU : Implémentation de shouldNotFilter()
+            @Override
+            protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+                String path = request.getRequestURI();
+                // Vérifie si l'URI commence par l'un des chemins d'exclusion
+                return exclusionPrefixes.stream().anyMatch(path::startsWith);
+            }
+
             @Override
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                     FilterChain filterChain)
                     throws ServletException, IOException {
 
+                // Cette logique ne sera exécutée QUE si shouldNotFilter() retourne FALSE
                 String authHeader = request.getHeader("Authorization");
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
                     String token = authHeader.substring(7);
