@@ -42,10 +42,21 @@ public class AuthController {
 
         String token = authService.login(email, password);
         if (token == null) {
-            return ResponseEntity.status(401).body("Email ou mot de passe invalide");
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Invalid email or password"));
         }
+        
+        User user = userService.findByEmail(email);
 
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.ok(Map.of("success", true, "message", "Authentication successful", "data", Map.of(
+                "token", token,
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "role", user.getRole(),
+                "phoneNumber", user.getPhoneNumber()
+
+        )));
     }
 
     @PostMapping("/register")
