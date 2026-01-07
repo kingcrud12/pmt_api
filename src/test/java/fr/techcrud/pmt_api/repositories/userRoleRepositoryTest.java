@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,13 +15,17 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class userRoleRepositoryTest {
 
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    @Autowired
-    private TestEntityManager entityManager;
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
+	private RoleRepository roleRepository;
 
     private User testUser;
     private Role testRole;
@@ -29,18 +33,22 @@ class userRoleRepositoryTest {
 
     @BeforeEach
     void setUp() {
+		userRoleRepository.deleteAllInBatch();
+		roleRepository.deleteAllInBatch();
+		userRepository.deleteAllInBatch();
         testUser = new User();
         testUser.setEmail("test@example.com");
+        testUser.setLastName("Lastname");
         testUser.setFirstName("testuser");
         testUser.setPassword("password123");
         testUser.setRole("USER");
-        testUser = entityManager.persistAndFlush(testUser);
+        testUser = userRepository.save(testUser);
 
         testRole = new Role();
         testRole.setName("TEST_ROLE");
         testRole.setDescription("Test role");
         testRole.setActive(true);
-        testRole = entityManager.persistAndFlush(testRole);
+        testRole = roleRepository.save(testRole);
 
         testUserRole = new UserRole();
         testUserRole.setUser(testUser);
@@ -50,7 +58,7 @@ class userRoleRepositoryTest {
 
     @Test
     void whenSaveUserRole_thenUserRoleIsPersisted() {
-        UserRole saved = userRoleRepository.save(testUserRole);
+        UserRole saved = userRoleRepository.saveAndFlush(testUserRole);
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getUser().getId()).isEqualTo(testUser.getId());
@@ -60,7 +68,7 @@ class userRoleRepositoryTest {
 
     @Test
     void whenFindByUserId_thenReturnUserRoles() {
-        entityManager.persistAndFlush(testUserRole);
+       userRoleRepository.saveAndFlush(testUserRole);
 
         List<UserRole> userRoles = userRoleRepository.findByUserId(testUser.getId());
 
@@ -70,20 +78,21 @@ class userRoleRepositoryTest {
 
     @Test
     void whenFindByRoleId_thenReturnUsersWithRole() {
-        entityManager.persistAndFlush(testUserRole);
+        userRoleRepository.saveAndFlush(testUserRole);
 
         User anotherUser = new User();
         anotherUser.setEmail("another@example.com");
+        anotherUser.setLastName("Lastname");
         anotherUser.setFirstName("another");
         anotherUser.setPassword("password");
         anotherUser.setRole("USER");
-        anotherUser = entityManager.persistAndFlush(anotherUser);
+        anotherUser = userRepository.saveAndFlush(anotherUser);
 
         UserRole anotherUserRole = new UserRole();
         anotherUserRole.setUser(anotherUser);
         anotherUserRole.setRole(testRole);
         anotherUserRole.setAssignedBy(testUser);
-        entityManager.persistAndFlush(anotherUserRole);
+        userRoleRepository.saveAndFlush(anotherUserRole);
 
         List<UserRole> usersWithRole = userRoleRepository.findByRoleId(testRole.getId());
 
@@ -92,7 +101,7 @@ class userRoleRepositoryTest {
 
     @Test
     void whenFindByUserIdAndRoleId_thenReturnUserRole() {
-        entityManager.persistAndFlush(testUserRole);
+        userRoleRepository.saveAndFlush(testUserRole);
 
         Optional<UserRole> found = userRoleRepository.findByUserIdAndRoleId(
                 testUser.getId(), testRole.getId());
@@ -104,7 +113,7 @@ class userRoleRepositoryTest {
 
     @Test
     void whenExistsByUserIdAndRoleId_thenReturnTrue() {
-        entityManager.persistAndFlush(testUserRole);
+        userRoleRepository.saveAndFlush(testUserRole);
 
         boolean exists = userRoleRepository.existsByUserIdAndRoleId(
                 testUser.getId(), testRole.getId());
@@ -114,7 +123,7 @@ class userRoleRepositoryTest {
 
     @Test
     void whenFindByUserIdWithRole_thenReturnUserRolesWithRoleData() {
-        entityManager.persistAndFlush(testUserRole);
+        userRoleRepository.saveAndFlush(testUserRole);
 
         List<UserRole> userRoles = userRoleRepository.findByUserIdWithRole(testUser.getId());
 
