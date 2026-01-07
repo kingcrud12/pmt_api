@@ -4,11 +4,11 @@ import fr.techcrud.pmt_api.models.Role;
 import fr.techcrud.pmt_api.services.RoleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -27,7 +28,7 @@ class RoleControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Mock
+    @MockitoBean
     private RoleService roleService;
 
     private Role testRole;
@@ -180,7 +181,9 @@ class RoleControllerTest {
     @Test
     @WithMockUser
     void whenActivateRole_thenReturn200() throws Exception {
-        mockMvc.perform(put("/api/v1/roles/" + testRoleId + "/activate")
+		when(roleService.findById(testRoleId)).thenReturn(testRole);
+		doNothing().when(roleService).activate(testRoleId);
+        mockMvc.perform(put("/api/v1/roles/" + testRoleId.toString() + "/activate")
                         .with(csrf()))
                 .andExpect(status().isOk());
     }
@@ -188,7 +191,9 @@ class RoleControllerTest {
     @Test
     @WithMockUser
     void whenDeactivateRole_thenReturn200() throws Exception {
-        mockMvc.perform(put("/api/v1/roles/" + testRoleId + "/deactivate")
+		when(roleService.findById(testRoleId)).thenReturn(testRole);
+		doNothing().when(roleService).deactivate(testRoleId);
+        mockMvc.perform(put("/api/v1/roles/" + testRoleId.toString() + "/deactivate")
                         .with(csrf()))
                 .andExpect(status().isOk());
     }
