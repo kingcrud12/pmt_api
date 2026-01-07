@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public interface permissionVerificationService {
+public interface PermissionVerificationService {
 
     /**
      * Check if user has a specific permission (with caching)

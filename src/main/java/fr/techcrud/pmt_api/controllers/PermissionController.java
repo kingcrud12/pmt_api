@@ -6,7 +6,7 @@ import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.exceptions.PermissionNotFoundException;
 import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
-import fr.techcrud.pmt_api.services.permissionService;
+import fr.techcrud.pmt_api.services.PermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class PermissionController {
 
     @Autowired
-    private permissionService permissionService;
+    private PermissionService permissionService;
 
     @GetMapping
     @RequiresPermission("PERMISSION:READ")

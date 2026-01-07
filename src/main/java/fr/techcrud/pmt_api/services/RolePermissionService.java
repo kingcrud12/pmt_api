@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public interface rolePermissionService {
+public interface RolePermissionService {
 
     List<RolePermission> findByRoleId(UUID roleId);
 

@@ -7,7 +7,7 @@ import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.exceptions.RoleNotFoundException;
 import fr.techcrud.pmt_api.models.Role;
 import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
-import fr.techcrud.pmt_api.services.roleService;
+import fr.techcrud.pmt_api.services.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class RoleController {
 
     @Autowired
-    private roleService roleService;
+    private RoleService roleService;
 
     @GetMapping
     @RequiresPermission("ROLE:READ")

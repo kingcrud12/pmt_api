@@ -6,7 +6,7 @@ import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.RolePermission;
 import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
-import fr.techcrud.pmt_api.services.rolePermissionService;
+import fr.techcrud.pmt_api.services.RolePermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class RolePermissionController {
 
     @Autowired
-    private rolePermissionService rolePermissionService;
+    private RolePermissionService rolePermissionService;
 
     @GetMapping("/role/{roleId}")
     @RequiresPermission("PERMISSION:READ")

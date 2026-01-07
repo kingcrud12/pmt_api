@@ -5,8 +5,8 @@ import fr.techcrud.pmt_api.security.annotations.RequiresAllPermissions;
 import fr.techcrud.pmt_api.security.annotations.RequiresAnyPermission;
 import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
 import fr.techcrud.pmt_api.security.annotations.RequiresRole;
-import fr.techcrud.pmt_api.services.permissionVerificationService;
-import fr.techcrud.pmt_api.services.userService;
+import fr.techcrud.pmt_api.services.PermissionVerificationService;
+import fr.techcrud.pmt_api.services.UserService;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -22,10 +22,10 @@ import java.util.UUID;
 public class PermissionAspect {
 
     @Autowired
-    private permissionVerificationService permissionVerificationService;
+    private PermissionVerificationService permissionVerificationService;
 
     @Autowired
-    private userService userService;
+    private UserService userService;
 
     @Around("@annotation(requiresPermission)")
     public Object checkPermission(ProceedingJoinPoint joinPoint, RequiresPermission requiresPermission)

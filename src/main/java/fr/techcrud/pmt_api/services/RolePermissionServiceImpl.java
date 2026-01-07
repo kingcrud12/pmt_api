@@ -3,9 +3,9 @@ package fr.techcrud.pmt_api.services;
 import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.Role;
 import fr.techcrud.pmt_api.models.RolePermission;
-import fr.techcrud.pmt_api.repositories.permissionRepository;
-import fr.techcrud.pmt_api.repositories.rolePermissionRepository;
-import fr.techcrud.pmt_api.repositories.roleRepository;
+import fr.techcrud.pmt_api.repositories.PermissionRepository;
+import fr.techcrud.pmt_api.repositories.RolePermissionRepository;
+import fr.techcrud.pmt_api.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,19 +15,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class rolePermissionServiceImpl implements rolePermissionService {
+public class RolePermissionServiceImpl implements RolePermissionService {
 
     @Autowired
-    private rolePermissionRepository rolePermissionRepository;
+    private RolePermissionRepository rolePermissionRepository;
 
     @Autowired
-    private roleRepository roleRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
-    private permissionRepository permissionRepository;
+    private PermissionRepository permissionRepository;
 
     @Autowired
-    private permissionVerificationService permissionVerificationService;
+    private PermissionVerificationService permissionVerificationService;
 
     @Override
     public List<RolePermission> findByRoleId(UUID roleId) {

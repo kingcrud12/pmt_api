@@ -1,7 +1,7 @@
 package fr.techcrud.pmt_api.services;
 
 import fr.techcrud.pmt_api.models.Role;
-import fr.techcrud.pmt_api.repositories.roleRepository;
+import fr.techcrud.pmt_api.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class roleServiceImpl implements roleService {
+public class RoleServiceImpl implements RoleService {
 
     @Autowired
-    private roleRepository roleRepository;
+    private RoleRepository roleRepository;
 
     @Override
     public List<Role> findAll() {

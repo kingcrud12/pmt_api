@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public interface permissionAuditService {
+public interface PermissionAuditService {
 
     void logRoleAssignment(User user, Role role, User assignedBy, String reason);
 

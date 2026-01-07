@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface rolePermissionRepository extends JpaRepository<RolePermission, UUID> {
+public interface RolePermissionRepository extends JpaRepository<RolePermission, UUID> {
 
     List<RolePermission> findByRoleId(UUID roleId);
 

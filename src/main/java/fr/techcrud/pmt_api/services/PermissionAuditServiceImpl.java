@@ -4,7 +4,7 @@ import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.PermissionAuditLog;
 import fr.techcrud.pmt_api.models.Role;
 import fr.techcrud.pmt_api.models.User;
-import fr.techcrud.pmt_api.repositories.permissionAuditLogRepository;
+import fr.techcrud.pmt_api.repositories.PermissionAuditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class permissionAuditServiceImpl implements permissionAuditService {
+public class PermissionAuditServiceImpl implements PermissionAuditService {
 
     @Autowired
-    private permissionAuditLogRepository auditLogRepository;
+    private PermissionAuditLogRepository auditLogRepository;
 
     @Override
     @Transactional

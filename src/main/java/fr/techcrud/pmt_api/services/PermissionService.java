@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public interface permissionService {
+public interface PermissionService {
 
     List<Permission> findAll();
 

@@ -7,8 +7,8 @@ import fr.techcrud.pmt_api.exceptions.RessourceNotFoundException;
 import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.models.UserRole;
 import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
-import fr.techcrud.pmt_api.services.userRoleService;
-import fr.techcrud.pmt_api.services.userService;
+import fr.techcrud.pmt_api.services.UserRoleService;
+import fr.techcrud.pmt_api.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 public class UserRoleController {
 
     @Autowired
-    private userRoleService userRoleService;
+    private UserRoleService userRoleService;
 
     @Autowired
-    private userService userService;
+    private UserService userService;
 
     @GetMapping("/user/{userId}")
     @RequiresPermission("ROLE:READ")

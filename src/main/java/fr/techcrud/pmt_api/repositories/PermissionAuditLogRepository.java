@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public interface permissionAuditLogRepository extends JpaRepository<PermissionAuditLog, UUID> {
+public interface PermissionAuditLogRepository extends JpaRepository<PermissionAuditLog, UUID> {
 
     List<PermissionAuditLog> findByUserIdOrderByPerformedAtDesc(UUID userId);
 

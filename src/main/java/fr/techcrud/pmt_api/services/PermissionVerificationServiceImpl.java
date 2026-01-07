@@ -2,8 +2,8 @@ package fr.techcrud.pmt_api.services;
 
 import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.UserRole;
-import fr.techcrud.pmt_api.repositories.rolePermissionRepository;
-import fr.techcrud.pmt_api.repositories.userRoleRepository;
+import fr.techcrud.pmt_api.repositories.RolePermissionRepository;
+import fr.techcrud.pmt_api.repositories.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class permissionVerificationServiceImpl implements permissionVerificationService {
+public class PermissionVerificationServiceImpl implements PermissionVerificationService {
 
     @Autowired
-    private rolePermissionRepository rolePermissionRepository;
+    private RolePermissionRepository rolePermissionRepository;
 
     @Autowired
-    private userRoleRepository userRoleRepository;
+    private UserRoleRepository userRoleRepository;
 
     @Override
     @Cacheable(value = "userPermissions", key = "#userId + '_' + #permissionString")

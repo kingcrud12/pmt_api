@@ -1,7 +1,7 @@
 package fr.techcrud.pmt_api.services;
 
 import fr.techcrud.pmt_api.models.Permission;
-import fr.techcrud.pmt_api.repositories.permissionRepository;
+import fr.techcrud.pmt_api.repositories.PermissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class permissionServiceImpl implements permissionService {
+public class PermissionServiceImpl implements PermissionService {
 
     @Autowired
-    private permissionRepository permissionRepository;
+    private PermissionRepository permissionRepository;
 
     @Override
     public List<Permission> findAll() {

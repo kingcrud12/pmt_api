@@ -3,7 +3,7 @@ package fr.techcrud.pmt_api.controllers;
 import fr.techcrud.pmt_api.dto.UserResponseDto;
 import fr.techcrud.pmt_api.exceptions.RessourceNotFoundException;
 import fr.techcrud.pmt_api.models.User;
-import fr.techcrud.pmt_api.services.userService;
+import fr.techcrud.pmt_api.services.UserService;
 import fr.techcrud.pmt_api.utils.UserResponseSerializer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class UserController {
 
     @Autowired
-    private userService userService;
+    private UserService userService;
     @Autowired
     private UserResponseSerializer userResponseSerializer;
 

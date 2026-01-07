@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface permissionRepository extends JpaRepository<Permission, UUID> {
+public interface PermissionRepository extends JpaRepository<Permission, UUID> {
 
     Optional<Permission> findByResourceAndAction(String resource, String action);
 
