@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,16 +13,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-class permissionRepositoryTest {
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class PermissionRepositoryTest {
 
     @Autowired
     private PermissionRepository permissionRepository;
 
-    @Autowired
-    private TestEntityManager entityManager;
-
     private Permission testPermission;
-
+	
     @BeforeEach
     void setUp() {
         testPermission = new Permission();
@@ -30,6 +28,7 @@ class permissionRepositoryTest {
         testPermission.setAction("READ");
         testPermission.setDescription("Read user data");
         testPermission.setActive(true);
+		permissionRepository.deleteAllInBatch();
     }
 
     @Test
@@ -45,7 +44,7 @@ class permissionRepositoryTest {
 
     @Test
     void whenFindByResourceAndAction_thenReturnPermission() {
-        entityManager.persistAndFlush(testPermission);
+        permissionRepository.saveAndFlush(testPermission);
 
         Optional<Permission> found = permissionRepository.findByResourceAndAction("USER", "READ");
 
@@ -67,21 +66,21 @@ class permissionRepositoryTest {
         readPerm.setAction("READ");
         readPerm.setDescription("Read project");
         readPerm.setActive(true);
-        entityManager.persistAndFlush(readPerm);
+        permissionRepository.save(readPerm);
 
         Permission writePerm = new Permission();
         writePerm.setResource("PROJECT");
         writePerm.setAction("WRITE");
         writePerm.setDescription("Write project");
         writePerm.setActive(true);
-        entityManager.persistAndFlush(writePerm);
+        permissionRepository.save(writePerm);
 
         Permission userPerm = new Permission();
         userPerm.setResource("USER");
         userPerm.setAction("READ");
         userPerm.setDescription("Read user");
         userPerm.setActive(true);
-        entityManager.persistAndFlush(userPerm);
+        permissionRepository.saveAndFlush(userPerm);
 
         List<Permission> projectPermissions = permissionRepository.findByResource("PROJECT");
 
@@ -97,14 +96,14 @@ class permissionRepositoryTest {
         activePerm.setAction("CREATE");
         activePerm.setDescription("Create task");
         activePerm.setActive(true);
-        entityManager.persistAndFlush(activePerm);
+        permissionRepository.saveAndFlush(activePerm);
 
         Permission inactivePerm = new Permission();
         inactivePerm.setResource("TASK");
         inactivePerm.setAction("DELETE");
         inactivePerm.setDescription("Delete task");
         inactivePerm.setActive(false);
-        entityManager.persistAndFlush(inactivePerm);
+        permissionRepository.saveAndFlush(inactivePerm);
 
         List<Permission> activePermissions = permissionRepository.findByActiveTrue();
 
@@ -114,8 +113,7 @@ class permissionRepositoryTest {
 
     @Test
     void whenExistsByResourceAndAction_thenReturnTrue() {
-        entityManager.persistAndFlush(testPermission);
-
+		permissionRepository.saveAndFlush(testPermission);
         boolean exists = permissionRepository.existsByResourceAndAction("USER", "READ");
 
         assertThat(exists).isTrue();
