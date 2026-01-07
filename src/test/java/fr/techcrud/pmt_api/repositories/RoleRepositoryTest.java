@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,13 +13,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-class roleRepositoryTest {
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class RoleRepositoryTest {
 
     @Autowired
     private RoleRepository roleRepository;
-
-    @Autowired
-    private TestEntityManager entityManager;
 
     private Role testRole;
 
@@ -29,11 +27,12 @@ class roleRepositoryTest {
         testRole.setName("TEST_ROLE");
         testRole.setDescription("Test role for unit tests");
         testRole.setActive(true);
+		roleRepository.deleteAllInBatch();
     }
 
     @Test
     void whenSaveRole_thenRoleIsPersisted() {
-        Role savedRole = roleRepository.save(testRole);
+        Role savedRole = roleRepository.saveAndFlush(testRole);
 
         assertThat(savedRole.getId()).isNotNull();
         assertThat(savedRole.getName()).isEqualTo("TEST_ROLE");
@@ -44,7 +43,7 @@ class roleRepositoryTest {
 
     @Test
     void whenFindByName_thenReturnRole() {
-        entityManager.persistAndFlush(testRole);
+        roleRepository.saveAndFlush(testRole);
 
         Optional<Role> found = roleRepository.findByName("TEST_ROLE");
 
@@ -65,13 +64,13 @@ class roleRepositoryTest {
         activeRole.setName("ACTIVE_ROLE");
         activeRole.setDescription("Active role");
         activeRole.setActive(true);
-        entityManager.persistAndFlush(activeRole);
+        roleRepository.saveAndFlush(activeRole);
 
         Role inactiveRole = new Role();
         inactiveRole.setName("INACTIVE_ROLE");
         inactiveRole.setDescription("Inactive role");
         inactiveRole.setActive(false);
-        entityManager.persistAndFlush(inactiveRole);
+        roleRepository.saveAndFlush(inactiveRole);
 
         List<Role> activeRoles = roleRepository.findByActiveTrue();
 
@@ -81,7 +80,7 @@ class roleRepositoryTest {
 
     @Test
     void whenExistsByName_thenReturnTrue() {
-        entityManager.persistAndFlush(testRole);
+        roleRepository.saveAndFlush(testRole);
 
         boolean exists = roleRepository.existsByName("TEST_ROLE");
 
@@ -101,19 +100,19 @@ class roleRepositoryTest {
         activeRole1.setName("ACTIVE_1");
         activeRole1.setDescription("Active 1");
         activeRole1.setActive(true);
-        entityManager.persistAndFlush(activeRole1);
+        roleRepository.saveAndFlush(activeRole1);
 
         Role activeRole2 = new Role();
         activeRole2.setName("ACTIVE_2");
         activeRole2.setDescription("Active 2");
         activeRole2.setActive(true);
-        entityManager.persistAndFlush(activeRole2);
+        roleRepository.saveAndFlush(activeRole2);
 
         Role inactiveRole = new Role();
         inactiveRole.setName("INACTIVE");
         inactiveRole.setDescription("Inactive");
         inactiveRole.setActive(false);
-        entityManager.persistAndFlush(inactiveRole);
+        roleRepository.saveAndFlush(inactiveRole);
 
         List<Role> activeRoles = roleRepository.findAllActiveRoles();
 
