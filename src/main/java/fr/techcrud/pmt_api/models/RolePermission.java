@@ -33,6 +33,7 @@ public class RolePermission {
     private LocalDateTime assignedAt;
 
     public RolePermission() {
+		this.assignedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
