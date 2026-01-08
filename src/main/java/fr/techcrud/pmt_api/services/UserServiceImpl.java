@@ -1,7 +1,7 @@
 package fr.techcrud.pmt_api.services;
 
 import fr.techcrud.pmt_api.models.User;
-import fr.techcrud.pmt_api.repositories.userRepository;
+import fr.techcrud.pmt_api.repositories.UserRepository;
 import fr.techcrud.pmt_api.utils.UserUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class userServiceImpl implements userService{
+public class UserServiceImpl implements UserService{
 
     @Autowired
-    private userRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private UserUpdate userUpdate;
@@ -23,7 +23,7 @@ public class userServiceImpl implements userService{
     @Autowired
     private final PasswordEncoder passwordEncoder;
 
-    public userServiceImpl(PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
 
