@@ -2,6 +2,7 @@ package fr.techcrud.pmt_api.services;
 
 import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.UserRole;
+import fr.techcrud.pmt_api.repositories.PermissionRepository;
 import fr.techcrud.pmt_api.repositories.RolePermissionRepository;
 import fr.techcrud.pmt_api.repositories.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class PermissionVerificationServiceImpl implements PermissionVerification
 
     @Autowired
     private UserRoleRepository userRoleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
 
     @Override
     @Cacheable(value = "userPermissions", key = "#userId + '_' + #permissionString")
@@ -68,4 +72,16 @@ public class PermissionVerificationServiceImpl implements PermissionVerification
     public void clearAllPermissionCaches() {
         // Cache eviction is handled by annotation
     }
+
+	@Override
+	public boolean exists(Permission permission) {
+        if (permission == null
+                || permission.getResource() == null
+                || permission.getAction() == null) {
+            return false;
+        }
+        return permissionRepository.existsByResourceAndAction(
+                permission.getResource(),
+                permission.getAction());
+	}
 }

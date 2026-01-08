@@ -2,6 +2,7 @@ package fr.techcrud.pmt_api.security.aspects;
 
 import fr.techcrud.pmt_api.exceptions.PermissionDeniedException;
 import fr.techcrud.pmt_api.exceptions.RessourceNotFoundException;
+import fr.techcrud.pmt_api.models.Permission;
 import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.security.annotations.RequiresAllPermissions;
 import fr.techcrud.pmt_api.security.annotations.RequiresAnyPermission;
@@ -9,45 +10,72 @@ import fr.techcrud.pmt_api.security.annotations.RequiresPermission;
 import fr.techcrud.pmt_api.security.annotations.RequiresRole;
 import fr.techcrud.pmt_api.services.PermissionVerificationService;
 import fr.techcrud.pmt_api.services.UserService;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.Collections;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
 class PermissionAspectTest {
 
-	@Mock
+	@MockitoBean
 	private PermissionVerificationService permissionVerificationService;
 
-	@Mock
+	@MockitoBean
 	private UserService userService;
 
-	@Mock
-	private ProceedingJoinPoint joinPoint;
-
-	@Mock
-	private SecurityContext securityContext;
-
-	@Mock
-	private Authentication authentication;
-
-	@InjectMocks
-	private PermissionAspect permissionAspect;
+	@Autowired
+	private TestService testService;
 
 	private User testUser;
 	private UUID userId;
+
+	@TestConfiguration
+	static class TestConfig {
+		@Bean
+		public TestService testService() {
+			return new TestService();
+		}
+	}
+
+	@Component
+	static class TestService {
+		@RequiresPermission("USER:READ")
+		public String methodWithPermission() {
+			return "success";
+		}
+
+		@RequiresRole("ADMIN")
+		public String methodWithRole() {
+			return "success";
+		}
+
+		@RequiresAnyPermission({"USER:READ", "USER:WRITE"})
+		public String methodWithAnyPermission() {
+			return "success";
+		}
+
+		@RequiresAllPermissions({"USER:READ", "USER:WRITE"})
+		public String methodWithAllPermissions() {
+			return "success";
+		}
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -55,128 +83,98 @@ class PermissionAspectTest {
 		testUser = new User();
 		testUser.setId(userId);
 		testUser.setEmail("test@example.com");
+		testUser.setLastName("Lastname");
 		testUser.setFirstName("testuser");
 
-		SecurityContextHolder.setContext(securityContext);
-		when(securityContext.getAuthentication()).thenReturn(authentication);
-		when(authentication.getPrincipal()).thenReturn("test@example.com");
+		// Setup Spring Security context
+		UsernamePasswordAuthenticationToken authentication =
+			new UsernamePasswordAuthenticationToken("test@example.com", null, Collections.emptyList());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
 		when(userService.findByEmail("test@example.com")).thenReturn(testUser);
 	}
 
 	@Test
-	void whenUserHasPermission_thenProceed() throws Throwable {
-		RequiresPermission annotation = mock(RequiresPermission.class);
-		when(annotation.value()).thenReturn("USER:READ");
+	void whenUserHasPermission_thenProceed() {
+		when(permissionVerificationService.exists(any(Permission.class))).thenReturn(true);
 		when(permissionVerificationService.hasPermission(userId, "USER:READ")).thenReturn(true);
-		when(joinPoint.proceed()).thenReturn("success");
 
-		permissionAspect.checkPermission(joinPoint, annotation);
+		String result = testService.methodWithPermission();
 
-		verify(joinPoint).proceed();
-		verify(permissionVerificationService).hasPermission(userId, "USER:READ");
+		assertThat(result).isEqualTo("success");
 	}
 
 	@Test
-	void whenUserDoesNotHavePermission_thenThrowPermissionDeniedException() throws Throwable {
-		RequiresPermission annotation = mock(RequiresPermission.class);
-		when(annotation.value()).thenReturn("USER:DELETE");
-		when(permissionVerificationService.hasPermission(userId, "USER:DELETE")).thenReturn(false);
+	void whenUserDoesNotHavePermission_thenThrowPermissionDeniedException() {
+		when(permissionVerificationService.hasPermission(userId, "USER:READ")).thenReturn(false);
 
-		assertThatThrownBy(() -> permissionAspect.checkPermission(joinPoint, annotation))
+		assertThatThrownBy(() -> testService.methodWithPermission())
 				.isInstanceOf(PermissionDeniedException.class)
-				.hasMessageContaining("USER:DELETE");
-
-		verify(joinPoint, never()).proceed();
+				.hasMessageContaining("USER:READ");
 	}
 
 	@Test
 	void whenUserNotFound_thenThrowRessourceNotFoundException() {
-		RequiresPermission annotation = mock(RequiresPermission.class);
-		when(annotation.value()).thenReturn("USER:READ");
 		when(userService.findByEmail("test@example.com")).thenReturn(null);
 
-		assertThatThrownBy(() -> permissionAspect.checkPermission(joinPoint, annotation))
+		assertThatThrownBy(() -> testService.methodWithPermission())
 				.isInstanceOf(RessourceNotFoundException.class)
 				.hasMessageContaining("Authenticated user not found");
 	}
 
 	@Test
-	void whenUserHasRole_thenProceed() throws Throwable {
-		RequiresRole annotation = mock(RequiresRole.class);
-		when(annotation.value()).thenReturn("ADMIN");
+	void whenUserHasRole_thenProceed() {
 		when(permissionVerificationService.hasRole(userId, "ADMIN")).thenReturn(true);
-		when(joinPoint.proceed()).thenReturn("success");
 
-		permissionAspect.checkRole(joinPoint, annotation);
+		String result = testService.methodWithRole();
 
-		verify(joinPoint).proceed();
-		verify(permissionVerificationService).hasRole(userId, "ADMIN");
+		assertThat(result).isEqualTo("success");
 	}
 
 	@Test
-	void whenUserDoesNotHaveRole_thenThrowPermissionDeniedException() throws Throwable {
-		RequiresRole annotation = mock(RequiresRole.class);
-		when(annotation.value()).thenReturn("ADMIN");
+	void whenUserDoesNotHaveRole_thenThrowPermissionDeniedException() {
 		when(permissionVerificationService.hasRole(userId, "ADMIN")).thenReturn(false);
 
-		assertThatThrownBy(() -> permissionAspect.checkRole(joinPoint, annotation))
+		assertThatThrownBy(() -> testService.methodWithRole())
 				.isInstanceOf(PermissionDeniedException.class)
 				.hasMessageContaining("ADMIN");
-
-		verify(joinPoint, never()).proceed();
 	}
 
 	@Test
-	void whenUserHasAnyPermission_thenProceed() throws Throwable {
-		RequiresAnyPermission annotation = mock(RequiresAnyPermission.class);
-		String[] permissions = { "USER:READ", "USER:WRITE" };
-		when(annotation.value()).thenReturn(permissions);
+	void whenUserHasAnyPermission_thenProceed() {
+		String[] permissions = {"USER:READ", "USER:WRITE"};
 		when(permissionVerificationService.hasAnyPermission(userId, permissions)).thenReturn(true);
-		when(joinPoint.proceed()).thenReturn("success");
 
-		permissionAspect.checkAnyPermission(joinPoint, annotation);
+		String result = testService.methodWithAnyPermission();
 
-		verify(joinPoint).proceed();
-		verify(permissionVerificationService).hasAnyPermission(userId, permissions);
+		assertThat(result).isEqualTo("success");
 	}
 
 	@Test
-	void whenUserDoesNotHaveAnyPermission_thenThrowPermissionDeniedException() throws Throwable {
-		RequiresAnyPermission annotation = mock(RequiresAnyPermission.class);
-		String[] permissions = { "USER:DELETE", "USER:ADMIN" };
-		when(annotation.value()).thenReturn(permissions);
+	void whenUserDoesNotHaveAnyPermission_thenThrowPermissionDeniedException() {
+		String[] permissions = {"USER:READ", "USER:WRITE"};
 		when(permissionVerificationService.hasAnyPermission(userId, permissions)).thenReturn(false);
 
-		assertThatThrownBy(() -> permissionAspect.checkAnyPermission(joinPoint, annotation))
+		assertThatThrownBy(() -> testService.methodWithAnyPermission())
 				.isInstanceOf(PermissionDeniedException.class);
-
-		verify(joinPoint, never()).proceed();
 	}
 
 	@Test
-	void whenUserHasAllPermissions_thenProceed() throws Throwable {
-		RequiresAllPermissions annotation = mock(RequiresAllPermissions.class);
-		String[] permissions = { "USER:READ", "USER:WRITE" };
-		when(annotation.value()).thenReturn(permissions);
+	void whenUserHasAllPermissions_thenProceed() {
+		String[] permissions = {"USER:READ", "USER:WRITE"};
 		when(permissionVerificationService.hasAllPermissions(userId, permissions)).thenReturn(true);
-		when(joinPoint.proceed()).thenReturn("success");
 
-		permissionAspect.checkAllPermissions(joinPoint, annotation);
+		String result = testService.methodWithAllPermissions();
 
-		verify(joinPoint).proceed();
-		verify(permissionVerificationService).hasAllPermissions(userId, permissions);
+		assertThat(result).isEqualTo("success");
 	}
 
 	@Test
-	void whenUserDoesNotHaveAllPermissions_thenThrowPermissionDeniedException() throws Throwable {
-		RequiresAllPermissions annotation = mock(RequiresAllPermissions.class);
-		String[] permissions = { "USER:READ", "USER:WRITE", "USER:DELETE" };
-		when(annotation.value()).thenReturn(permissions);
+	void whenUserDoesNotHaveAllPermissions_thenThrowPermissionDeniedException() {
+		String[] permissions = {"USER:READ", "USER:WRITE"};
 		when(permissionVerificationService.hasAllPermissions(userId, permissions)).thenReturn(false);
 
-		assertThatThrownBy(() -> permissionAspect.checkAllPermissions(joinPoint, annotation))
+		assertThatThrownBy(() -> testService.methodWithAllPermissions())
 				.isInstanceOf(PermissionDeniedException.class);
-
-		verify(joinPoint, never()).proceed();
 	}
 }

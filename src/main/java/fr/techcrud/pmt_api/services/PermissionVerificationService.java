@@ -29,6 +29,12 @@ public interface PermissionVerificationService {
      */
     boolean hasRole(UUID userId, String roleName);
 
+	/**
+	 * 
+	 * Checks if those type of permission exists
+	 */
+	boolean exists(Permission permission);
+
     /**
      * Get all permissions for a user (cached)
      */
