@@ -62,9 +62,11 @@ public class PermissionVerificationServiceImpl implements PermissionVerification
     }
 
     @Override
-    @CacheEvict(value = {"userPermissions", "userPermissionsList", "userRoles"}, allEntries = false, key = "#userId")
+    @CacheEvict(value = {"userPermissions", "userPermissionsList", "userRoles"}, allEntries = true)
     public void clearUserPermissionCache(UUID userId) {
         // Cache eviction is handled by annotation
+        // Note: Using allEntries=true because userPermissions and userRoles use composite keys
+        // that include the permission string and role name respectively
     }
 
     @Override

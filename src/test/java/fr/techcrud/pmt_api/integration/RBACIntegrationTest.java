@@ -26,7 +26,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 6. Revoke role from user
  * 7. Verify user no longer has permission
  */
-@SpringBootTest
+@SpringBootTest(properties = {
+	"spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL;NON_KEYWORDS=USER",
+	"spring.jpa.hibernate.ddl-auto=create-drop",
+	"spring.flyway.enabled=false"
+})
 @ActiveProfiles("test")
 @Transactional
 class RBACIntegrationTest {
@@ -60,6 +64,7 @@ class RBACIntegrationTest {
         // Create admin user
         adminUser = new User();
         adminUser.setEmail("admin@example.com");
+        adminUser.setLastName("Lastname");
         adminUser.setFirstName("admin");
         adminUser.setPassword("password");
         adminUser.setRole("ADMIN");
@@ -68,6 +73,7 @@ class RBACIntegrationTest {
         // Create test user
         testUser = new User();
         testUser.setEmail("test@example.com");
+        testUser.setLastName("Lastname");
         testUser.setFirstName("testuser");
         testUser.setPassword("password");
         testUser.setRole("USER");
