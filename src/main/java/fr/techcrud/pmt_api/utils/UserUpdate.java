@@ -1,7 +1,7 @@
 package fr.techcrud.pmt_api.utils;
 
 import fr.techcrud.pmt_api.models.User;
-import fr.techcrud.pmt_api.repositories.userRepository;
+import fr.techcrud.pmt_api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import java.util.UUID;
 public class UserUpdate {
 
     @Autowired
-    userRepository userRepository;
+    UserRepository userRepository;
 
     public User userUpdater(UUID id, User userData) {
         Optional<User> user = userRepository.findById(id);
