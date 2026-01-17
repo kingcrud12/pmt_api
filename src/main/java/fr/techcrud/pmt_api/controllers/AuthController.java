@@ -4,7 +4,7 @@ import fr.techcrud.pmt_api.dto.UserResponseDto;
 import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.services.AuthService;
-import fr.techcrud.pmt_api.services.UserService;
+import fr.techcrud.pmt_api.services.userService;
 import fr.techcrud.pmt_api.utils.UserResponseSerializer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +23,7 @@ import java.util.Map;
 public class AuthController {
 
     @Autowired
-    private UserService userService;
+    private userService userService;
 
     private final AuthService authService;
 
