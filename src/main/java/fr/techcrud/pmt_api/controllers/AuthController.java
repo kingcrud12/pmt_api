@@ -1,6 +1,5 @@
 package fr.techcrud.pmt_api.controllers;
 
-import fr.techcrud.pmt_api.dto.UserResponseDto;
 import fr.techcrud.pmt_api.exceptions.BadRequestException;
 import fr.techcrud.pmt_api.models.User;
 import fr.techcrud.pmt_api.services.AuthService;
@@ -18,6 +17,7 @@ import fr.techcrud.pmt_api.dto.UserLoginDto;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "Endpoints for authentication")
 public class AuthController {
@@ -60,13 +60,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @ResponseStatus(code = HttpStatus.CREATED)
     @Operation(summary = "Create account", description = "Register a new user")
-    public UserResponseDto create(@RequestBody User user) {
+    public ResponseEntity<?> create(@RequestBody User user) {
         User response = userService.create(user);
         if (response == null) {
             throw new BadRequestException("User already exists");
         }
-        return userResponseSerializer.toResponse(user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(userResponseSerializer.toResponse(true, "User created successfully", response));
     }
 }

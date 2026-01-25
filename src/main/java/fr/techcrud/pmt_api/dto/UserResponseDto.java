@@ -10,8 +10,16 @@ public class UserResponseDto {
     private String lastName;
     private String email;
     private String role;
+    private boolean status;
+    private String message;
 
     // getters et setters
+    public boolean getStatus() { return status; }
+    public void setStatus(boolean status) { this.status = status; }
+
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
